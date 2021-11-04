@@ -172,6 +172,10 @@ def Astar(knowledge_grid, start, end, flag=True, heuristic="manhattan"):
     return [None]
 
 
+
+# def agent6():
+
+
 ####################################################################################
 #################################     MAIN    ######################################
 ####################################################################################
@@ -212,17 +216,24 @@ if __name__ == "__main__":
     print("flat", c_flat)
     print("hill", c_hill)
     print("forrest", c_forrest)
-        
 
 
     # #initializing knowledge of agent
-    # knowledge = [ [ "-" for i in range(grid_len) ] for j in range(grid_len) ]
+    knowledge = [ [ "-" for i in range(grid_len) ] for j in range(grid_len) ]
     
-    # #Set the start and goal
-    # start = Node()
-    # start.position = (0, 0)
-    # goal = Node()
-    # goal.position = (grid_len-1, grid_len-1)
+    #Set the start and goal
+    start = Node()
+    start.position = (random.randint(0,grid_len-1), random.randint(0,grid_len-1))
+    target = Node()
+    target.position = (random.randint(0,grid_len-1), random.randint(0,grid_len-1))
+
+    print("start", start.position)
+    print("target", target.position)
+
+    # for any given grid ... first check whether the target is reachable from start
+    res = Astar(knowledge, start, target)
+    print("path", res)
+
 
     #Call the Agent
     # res = agent_3(matrix, knowledge, start, goal, "manhattan")
