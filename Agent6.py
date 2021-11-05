@@ -5,7 +5,6 @@ import math
 import sys
 
 max = sys.maxsize
-
 neighbour_cardinal = [(-1, 0),(0, -1),(0, 1),(1, 0)]
 
 # Node class for storing position, cost and heuristic for each grid encountered
@@ -18,7 +17,7 @@ class Node:
         self.h = 0
         self.f = 0
         # probability of the cell being the target 
-        self.prob = 1
+        self.prob = 0
         # type of terrain 1-flat, 2-hill, 3-forest, 0-default
         self.terrain = 0
 
@@ -172,6 +171,24 @@ def Astar(knowledge_grid, start, end, flag=True, heuristic="manhattan"):
     return [None]
 
 
+def examine(hash_map, position, target):
+    if position == target.position:
+        x = position[0]
+        y = position[1]
+        cell = hash_map[(x,y)]
+        print("target terrain", cell.terrain)
+        num = random.uniform(0,1)
+        if cell.terrain == 1:
+            if num > 0.2:
+                return True
+        elif cell.terrain == 2:
+            if num > 0.5:
+                return True
+        elif cell.terrain == 3:
+            if num > 0.8:
+                return True
+
+    return False
 
 # def agent6():
 
@@ -196,11 +213,33 @@ if __name__ == "__main__":
     c_hill = 0
     c_forrest = 0
 
+    #initializing knowledge of agent
+    knowledge = [ [ "-" for i in range(grid_len) ] for j in range(grid_len) ]
+
+    # priority queue to store the highest probability values
+    probQueue = PriorityQueue()    
+    
+    #Set the start and goal
+    start = Node()
+    start.position = (random.randint(0,grid_len-1), random.randint(0,grid_len-1))
+    matrix[start.position[0]][start.position[1]] = 0
+    target = Node()
+    target.position = (random.randint(0,grid_len-1), random.randint(0,grid_len-1))
+    matrix[target.position[0]][target.position[1]] = 0
+
+    print("start", start.position)
+    print("target", target.position)
+
     #create node for each cell and assign a terrain type to it:
     for i in range(grid_len):
         for j in range(grid_len):
-            cell = Node(i,j)
-            if (matrix[i][j] ==0):
+            cell = Node((i,j))
+            print("cell", cell.position)
+            # initially assigning all the cells  equal probabiltity of target
+            cell.prob = 1/(grid_len*grid_len)
+            probQueue.put(PrioritizedItem(cell.prob, cell))
+            # assigning terrain types for unblocked cells
+            if (matrix[i][j] == 0):
                 num = random.uniform(0, 1)
                 if(num < 0.33):
                     cell.terrain = 1
@@ -211,29 +250,21 @@ if __name__ == "__main__":
                 else:
                     cell.terrain = 3
                     c_forrest += 1
-
+            hash_map[(i,j)] = cell
+    
+    current = probQueue.get().item
+    print("queue top" , current.position)
     
     print("flat", c_flat)
     print("hill", c_hill)
     print("forrest", c_forrest)
 
-
-    # #initializing knowledge of agent
-    knowledge = [ [ "-" for i in range(grid_len) ] for j in range(grid_len) ]
-    
-    #Set the start and goal
-    start = Node()
-    start.position = (random.randint(0,grid_len-1), random.randint(0,grid_len-1))
-    target = Node()
-    target.position = (random.randint(0,grid_len-1), random.randint(0,grid_len-1))
-
-    print("start", start.position)
-    print("target", target.position)
-
     # for any given grid ... first check whether the target is reachable from start
     res = Astar(knowledge, start, target)
     print("path", res)
 
+    position = target.position
+    print("examine", examine(hash_map, position, target))
 
     #Call the Agent
     # res = agent_3(matrix, knowledge, start, goal, "manhattan")
