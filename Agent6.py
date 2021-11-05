@@ -198,7 +198,7 @@ def examine(hash_map, position, target):
 ####################################################################################
 
 if __name__ == "__main__":
-    grid_len = 10
+    grid_len = 5
     actual_path = []
     shortest_path = []
     hash_map = {} #Dictionary to store nodes
@@ -234,7 +234,6 @@ if __name__ == "__main__":
     for i in range(grid_len):
         for j in range(grid_len):
             cell = Node((i,j))
-            print("cell", cell.position)
             # initially assigning all the cells  equal probabiltity of target
             cell.prob = 1/(grid_len*grid_len)
             probQueue.put(PrioritizedItem(cell.prob, cell))
@@ -252,15 +251,12 @@ if __name__ == "__main__":
                     c_forrest += 1
             hash_map[(i,j)] = cell
     
-    current = probQueue.get().item
-    print("queue top" , current.position)
-    
     print("flat", c_flat)
     print("hill", c_hill)
     print("forrest", c_forrest)
 
     # for any given grid ... first check whether the target is reachable from start
-    res = Astar(knowledge, start, target)
+    res = Astar(matrix, start, target)
     print("path", res)
 
     position = target.position
@@ -269,11 +265,32 @@ if __name__ == "__main__":
     #Call the Agent
     # res = agent_3(matrix, knowledge, start, goal, "manhattan")
 
-    
-    #CHECKING CONSISTENCY OF DATA IN KNOWLEDGE AND MATRIX
-    # for i in range(grid_len):
-    #     for j in range(grid_len):
-    #         if (matrix[i][j] != knowledge[i][j] and knowledge[i][j] != '-'):
-    #             print(i, j, "mismatch should be ", matrix[i][j], " is ", knowledge[i][j])
-    #             hash_map[(i,j)].print_attributes()
-    #             break
+    #run the agent until target not found
+    flag = True
+    while flag:
+        prob_target = probQueue.get().item
+
+        if probQueue.empty():
+            break
+
+        #find path from current to prob_target
+        path = Astar(knowledge, start, prob_target)[0]
+
+        #move along the path provided by A-star
+        if path:
+            print("path", path)    
+            for itr in range(1, len(path)):
+                x = path[itr][0]
+                y = path[itr][1]
+
+                if matrix[x][y] == 1:
+                    print("blocked")
+                    knowledge[x][y] = 1
+                    print("start" , path[itr-1])
+                    start = hash_map[path[itr-1]]
+                
+                if examine(hash_map, (x,y), target):
+                    print("target found ", x, y)
+                    flag = False
+                    break
+
