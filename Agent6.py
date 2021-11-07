@@ -20,6 +20,8 @@ class Node:
         self.prob = 0
         # type of terrain 1-flat, 2-hill, 3-forest, 0-default
         self.terrain = 0
+        # check if cell is already examined
+        self.examined = False
 
 
 
@@ -172,10 +174,12 @@ def Astar(knowledge_grid, start, end, flag=True, heuristic="manhattan"):
 
 
 def examine(hash_map, position, target):
+    x = position[0]
+    y = position[1]
+    cell = hash_map[(x,y)]
+    cell.examined = True
+
     if position == target.position:
-        x = position[0]
-        y = position[1]
-        cell = hash_map[(x,y)]
         print("target terrain", cell.terrain)
         num = random.uniform(0,1)
         if cell.terrain == 1:
@@ -190,7 +194,21 @@ def examine(hash_map, position, target):
 
     return False
 
-# def agent6():
+#This function needs to update all other cells probability depending upon the terrain type of the current cell
+# we only call this function when the examination of x,y gives us false
+def update_prob(hash_map, position, probQueu):
+    x = position[0]
+    y = position[1]
+    cell = hash_map[(x,y)]
+    #also update the probability of the current cell and put it in the queue as it would have been dequeued
+
+    # for now reducing the prob of examined cells to 0.001
+    cell.prob = 0.001
+    
+
+    # check how can we update the values of cell already present in the priority queue
+    # probQueue.put(PrioritizedItem(cell.prob,cell))
+    # print("probQueue:", probQueue.queue)
 
 
 ####################################################################################
@@ -198,16 +216,13 @@ def examine(hash_map, position, target):
 ####################################################################################
 
 if __name__ == "__main__":
-    grid_len = 5
+    grid_len = 10
     actual_path = []
     shortest_path = []
     hash_map = {} #Dictionary to store nodes
 
     #creating random grid world by providing it a p value of 0.3
     matrix = create_grid(grid_len, 0.30)
-
-    print("FULL KNOWN GRIDWORLD")
-    print_grid(matrix)
 
     c_flat = 0
     c_hill = 0
@@ -229,6 +244,9 @@ if __name__ == "__main__":
 
     print("start", start.position)
     print("target", target.position)
+
+    print("FULL KNOWN GRIDWORLD")
+    print_grid(matrix)
 
     #create node for each cell and assign a terrain type to it:
     for i in range(grid_len):
@@ -259,10 +277,11 @@ if __name__ == "__main__":
     res = Astar(matrix, start, target)
     print("path", res)
 
-    position = target.position
-    print("examine", examine(hash_map, position, target))
+    # used to check whether false negative was working can remove later
+    # position = target.position
+    # print("examine", examine(hash_map, position, target))
 
-    #Call the Agent
+    # Call the Agent
     # res = agent_3(matrix, knowledge, start, goal, "manhattan")
 
     #run the agent until target not found
@@ -271,6 +290,7 @@ if __name__ == "__main__":
         prob_target = probQueue.get().item
 
         if probQueue.empty():
+            print("queue empty")
             break
 
         #find path from current to prob_target
@@ -278,7 +298,7 @@ if __name__ == "__main__":
 
         #move along the path provided by A-star
         if path:
-            print("path", path)    
+            #print("path", path)    
             for itr in range(1, len(path)):
                 x = path[itr][0]
                 y = path[itr][1]
@@ -286,11 +306,19 @@ if __name__ == "__main__":
                 if matrix[x][y] == 1:
                     print("blocked")
                     knowledge[x][y] = 1
-                    print("start" , path[itr-1])
-                    start = hash_map[path[itr-1]]
-                
-                if examine(hash_map, (x,y), target):
-                    print("target found ", x, y)
-                    flag = False
-                    break
+                    if itr-1>0:
+                        start = hash_map[path[itr-1]]
+                    else:
+                        start = hash_map[path[1]]
+                    print("start" , start)
+
+                else:
+                    if examine(hash_map, (x,y), target):
+                        print("target found ", x, y)
+                        flag = False
+                        break
+                    else:
+                        update_prob(hash_map, (x,y), probQueue)
+        
+        # probQueue.put(PrioritizedItem(prob_target.prob-0.0001, prob_target))
 
