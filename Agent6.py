@@ -178,6 +178,7 @@ def examine(hash_map, position, target):
     y = position[1]
     cell = hash_map[(x,y)]
     cell.examined = True
+    print("#####Examine#####")
 
     if position == target.position:
         print("target terrain", cell.terrain)
@@ -196,19 +197,32 @@ def examine(hash_map, position, target):
 
 #This function needs to update all other cells probability depending upon the terrain type of the current cell
 # we only call this function when the examination of x,y gives us false
-def update_prob(hash_map, position, probQueu):
+def update_prob(position, belief):
     x = position[0]
     y = position[1]
-    cell = hash_map[(x,y)]
-    #also update the probability of the current cell and put it in the queue as it would have been dequeued
-
-    # for now reducing the prob of examined cells to 0.001
-    cell.prob = 0.001
-    
-
+    belief[x][y] = 0.0001
     # check how can we update the values of cell already present in the priority queue
     # probQueue.put(PrioritizedItem(cell.prob,cell))
     # print("probQueue:", probQueue.queue)
+
+
+def get_max_prob(belief, start):
+    max_prob = -1
+    max_pos = (-101,-101)
+    grid_len = len(belief)
+
+    for i in range(grid_len):
+        for j in range(grid_len):
+            if belief[i][j] > max_prob:
+                max_prob = belief[i][j]
+            elif belief[i][j] == max_prob:
+                if calc_manhattan(start, (i,j)) < calc_manhattan(start,max_pos) and calc_manhattan(start, (i,j)) != 0:
+                    max_pos = (i,j)
+                elif calc_manhattan(start, (i,j)) == calc_manhattan(start,max_pos):
+                    if random.uniform(0, 1) > 0.5:
+                        max_pos = (i,j)
+    
+    return max_pos
 
 
 ####################################################################################
@@ -234,6 +248,13 @@ if __name__ == "__main__":
     # priority queue to store the highest probability values
     probQueue = PriorityQueue()    
     
+    #initialize dim X dim matrix to maintain the belief
+    initial_prob = 1/(grid_len*grid_len)
+    belief = [ [initial_prob for i in range(grid_len)] for j in range(grid_len) ]
+
+    print("Initial Belief")
+    print_grid(belief)
+
     #Set the start and goal
     start = Node()
     start.position = (random.randint(0,grid_len-1), random.randint(0,grid_len-1))
@@ -252,9 +273,6 @@ if __name__ == "__main__":
     for i in range(grid_len):
         for j in range(grid_len):
             cell = Node((i,j))
-            # initially assigning all the cells  equal probabiltity of target
-            cell.prob = 1/(grid_len*grid_len)
-            probQueue.put(PrioritizedItem(cell.prob, cell))
             # assigning terrain types for unblocked cells
             if (matrix[i][j] == 0):
                 num = random.uniform(0, 1)
@@ -275,50 +293,50 @@ if __name__ == "__main__":
 
     # for any given grid ... first check whether the target is reachable from start
     res = Astar(matrix, start, target)
+    if res == None:
+        sys.exit()
     print("path", res)
 
-    # used to check whether false negative was working can remove later
-    # position = target.position
-    # print("examine", examine(hash_map, position, target))
-
-    # Call the Agent
-    # res = agent_3(matrix, knowledge, start, goal, "manhattan")
 
     #run the agent until target not found
     flag = True
     while flag:
-        prob_target = probQueue.get().item
+        prob_target = get_max_prob(belief, start.position)
+        prob_target = hash_map[prob_target]
 
-        if probQueue.empty():
-            print("queue empty")
-            break
+        print("target",prob_target)
+
+        # if probQueue.empty():
+        #     print("queue empty")
+        #     break
 
         #find path from current to prob_target
         path = Astar(knowledge, start, prob_target)[0]
 
         #move along the path provided by A-star
         if path:
-            #print("path", path)    
+            print("path", path)    
             for itr in range(1, len(path)):
                 x = path[itr][0]
                 y = path[itr][1]
 
                 if matrix[x][y] == 1:
-                    print("blocked")
+                    print("blocked",x,y)
                     knowledge[x][y] = 1
-                    if itr-1>0:
+                    if itr-1>=0:
+                        print("check",path[itr-1])
                         start = hash_map[path[itr-1]]
-                    else:
-                        start = hash_map[path[1]]
-                    print("start" , start)
-
+                        print("start" , start)
+                        prob_target = get_max_prob(belief, path[itr-1])
+                        prob_target = hash_map[prob_target]
+                        path = Astar(knowledge, start, prob_target)
+                        itr = 1
+                    
                 else:
                     if examine(hash_map, (x,y), target):
                         print("target found ", x, y)
                         flag = False
                         break
                     else:
-                        update_prob(hash_map, (x,y), probQueue)
-        
-        # probQueue.put(PrioritizedItem(prob_target.prob-0.0001, prob_target))
+                        update_prob((x,y), belief)
 
