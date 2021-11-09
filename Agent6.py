@@ -315,14 +315,16 @@ if __name__ == "__main__":
 
         #move along the path provided by A-star
         if path:
-            print("path", path)    
-            for itr in range(1, len(path)):
+            print("path", path)
+            itr = 1    
+            while itr < len(path):
                 x = path[itr][0]
                 y = path[itr][1]
 
                 if matrix[x][y] == 1:
                     print("blocked",x,y)
                     knowledge[x][y] = 1
+                    belief[x][y] = 0
                     if itr-1>=0:
                         print("check",path[itr-1])
                         start = hash_map[path[itr-1]]
@@ -339,4 +341,8 @@ if __name__ == "__main__":
                         break
                     else:
                         update_prob((x,y), belief)
-
+                    itr += 1
+        else:
+            print("path not found")
+            print("exit loop")
+            break
