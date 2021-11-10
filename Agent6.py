@@ -206,21 +206,25 @@ def update_prob(position, belief):
     # print("probQueue:", probQueue.queue)
 
 
-def get_max_prob(belief, start):
+def get_max_prob(belief, checked, start):
     max_prob = -1
-    max_pos = (-101,-101)
+    max_pos = (0,0)
     grid_len = len(belief)
 
     for i in range(grid_len):
         for j in range(grid_len):
-            if belief[i][j] > max_prob:
+            if belief[i][j] > max_prob and checked[i][j]==0:
                 max_prob = belief[i][j]
-            elif belief[i][j] == max_prob:
+                max_pos = (i,j)
+                checked[i][j]=1
+            elif belief[i][j] == max_prob and checked[i][j]==0:
                 if calc_manhattan(start, (i,j)) < calc_manhattan(start,max_pos) and calc_manhattan(start, (i,j)) != 0:
                     max_pos = (i,j)
+                    checked[i][j]=1
                 elif calc_manhattan(start, (i,j)) == calc_manhattan(start,max_pos):
                     if random.uniform(0, 1) > 0.5:
                         max_pos = (i,j)
+                        checked[i][j]=1
     
     return max_pos
 
@@ -301,17 +305,27 @@ if __name__ == "__main__":
     #run the agent until target not found
     flag = True
     while flag:
-        prob_target = get_max_prob(belief, start.position)
-        prob_target = hash_map[prob_target]
-
-        print("target",prob_target)
-
+        checked = [ [0 for i in range(grid_len)] for j in range(grid_len) ]
         # if probQueue.empty():
         #     print("queue empty")
         #     break
 
         #find path from current to prob_target
-        path = Astar(knowledge, start, prob_target)[0]
+        count = 0
+        while True:
+            prob_target = get_max_prob(belief, checked, start.position)
+            prob_target = hash_map[prob_target] 
+            print("target",prob_target)
+            path = Astar(knowledge, start, prob_target)[0]
+            if path:
+                break
+            if count==grid_len^2-1:
+                print("all targets checked")
+                flag = False
+                break
+            count += 1
+           
+
 
         #move along the path provided by A-star
         if path:
@@ -329,9 +343,19 @@ if __name__ == "__main__":
                         print("check",path[itr-1])
                         start = hash_map[path[itr-1]]
                         print("start" , start)
-                        prob_target = get_max_prob(belief, path[itr-1])
-                        prob_target = hash_map[prob_target]
-                        path = Astar(knowledge, start, prob_target)
+                        checked = [ [0 for i in range(grid_len)] for j in range(grid_len) ]
+                        count = 0
+                        while True:
+                            prob_target = get_max_prob(belief, checked, start.position)
+                            prob_target = hash_map[prob_target] 
+                            path = Astar(knowledge, start, prob_target)
+                            if path:
+                                break
+                            if count==grid_len^2-1:
+                                print("all targets checked")
+                                flag = False
+                                break
+                            count += 1
                         itr = 1
                     
                 else:
