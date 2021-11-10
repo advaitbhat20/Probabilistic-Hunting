@@ -197,7 +197,7 @@ def examine(hash_map, position, target):
 
 #This function needs to update all other cells probability depending upon the terrain type of the current cell
 # we only call this function when the examination of x,y gives us false
-def update_prob(position, belief):
+def update_prob(position, belief, hash_map):
     x = position[0]
     y = position[1]
     belief[x][y] = 0.0001
@@ -213,11 +213,11 @@ def get_max_prob(belief, checked, start):
 
     for i in range(grid_len):
         for j in range(grid_len):
-            if belief[i][j] > max_prob and checked[i][j]==0:
+            if belief[i][j] > max_prob and checked[i][j]==0 and start[0] != i  and start[1] != j:
                 max_prob = belief[i][j]
                 max_pos = (i,j)
                 checked[i][j]=1
-            elif belief[i][j] == max_prob and checked[i][j]==0:
+            elif belief[i][j] == max_prob and checked[i][j]==0 and start[0] != i  and start[1] != j:
                 if calc_manhattan(start, (i,j)) < calc_manhattan(start,max_pos) and calc_manhattan(start, (i,j)) != 0:
                     max_pos = (i,j)
                     checked[i][j]=1
@@ -364,7 +364,7 @@ if __name__ == "__main__":
                         flag = False
                         break
                     else:
-                        update_prob((x,y), belief)
+                        update_prob((x,y), belief, hash_map)
                     itr += 1
         else:
             print("path not found")
