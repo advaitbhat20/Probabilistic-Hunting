@@ -197,10 +197,67 @@ def examine(hash_map, position, target):
 
 #This function needs to update all other cells probability depending upon the terrain type of the current cell
 # we only call this function when the examination of x,y gives us false
-def update_prob(position, belief, hash_map):
+def update_prob(position, belief, hash_map, condition):
     x = position[0]
     y = position[1]
-    belief[x][y] = 0.0001
+    grid_len = len(belief)
+    #UPDATE WHEN CELL ENCOUNTERED IS BLOCKED
+    if condition == "blocked":
+        for i in range(grid_len):
+            for j in range(grid_len):
+                if i != x and j != y:
+                    prob = belief[i][j]/(1- belief[x][y])
+                    belief[i][j] = prob
+        belief[x][y] = 0
+    #UPDATE WHEN CELL ENCOUNTERED IS FLAT
+    if condition == 1:
+        summation = 0
+        for i in range(grid_len):
+            for j in range(grid_len):
+                if i != x and j != y and knowledge[i][j] != 1:
+                    prob = belief[i][j]/((1- belief[x][y])+(belief[x][y]*0.2))
+                    belief[i][j] = prob
+                    summation += prob
+                    if summation > 1:
+                        print("belief overflow", summation, (x,y))
+                        print_grid(belief)
+                        print_grid(knowledge)
+                        print_grid(matrix)
+                        sys.exit()
+        belief[x][y] = 1 - summation
+    #UPDATE WHEN CELL ENCOUNTERED IS HILLY
+    if condition == 2:
+        summation = 0
+        for i in range(grid_len):
+            for j in range(grid_len):
+                if i != x and j != y and knowledge[i][j] != 1:
+                    prob = belief[i][j]/((1- belief[x][y])+(belief[x][y]*0.5))
+                    belief[i][j] = prob
+                    summation += prob
+                    if summation > 1:
+                        print("belief overflow", summation, (x,y))
+                        print_grid(belief)
+                        print_grid(knowledge)
+                        print_grid(matrix)
+                        sys.exit()
+
+        belief[x][y] = 1 - summation
+    #UPDATE WHEN CELL ENCOUNTERED IS FOREST
+    if condition == 3:
+        summation = 0
+        for i in range(grid_len):
+            for j in range(grid_len):
+                if i != x and j != y and knowledge[i][j] != 1:
+                    prob = belief[i][j]/((1- belief[x][y])+(belief[x][y]*0.8))
+                    belief[i][j] = prob
+                    summation += prob
+                    if summation > 1:
+                        print("belief overflow", summation, (x,y))
+                        print_grid(belief)
+                        print_grid(knowledge)
+                        print_grid(matrix)
+                        sys.exit()
+        belief[x][y] = 1 - summation
     # check how can we update the values of cell already present in the priority queue
     # probQueue.put(PrioritizedItem(cell.prob,cell))
     # print("probQueue:", probQueue.queue)
@@ -338,7 +395,7 @@ if __name__ == "__main__":
                 if matrix[x][y] == 1:
                     print("blocked",x,y)
                     knowledge[x][y] = 1
-                    belief[x][y] = 0
+                    update_prob((x, y), belief, hash_map, "blocked")
                     if itr-1>=0:
                         print("check",path[itr-1])
                         start = hash_map[path[itr-1]]
@@ -364,7 +421,8 @@ if __name__ == "__main__":
                         flag = False
                         break
                     else:
-                        update_prob((x,y), belief, hash_map)
+                        update_prob((x,y), belief, hash_map, hash_map[(x,y)].terrain)
+                        # update_prob((x,y), belief, hash_map, hash_map[(x,y)].terrain)
                     itr += 1
         else:
             print("path not found")
