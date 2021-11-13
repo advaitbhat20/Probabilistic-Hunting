@@ -178,10 +178,10 @@ def examine(hash_map, position, target):
     y = position[1]
     cell = hash_map[(x,y)]
     cell.examined = True
-    print("#####Examine#####")
+    # print("#####Examine#####")
 
     if position == target.position:
-        print("target terrain", cell.terrain)
+        # print("target terrain", cell.terrain)
         num = random.uniform(0,1)
         if cell.terrain == 1:
             if num > 0.2:
@@ -220,11 +220,11 @@ def update_prob(position, belief, hash_map, condition):
                     summation += prob
                     if summation > 1:
                         print("belief overflow", summation, (x,y))
-                        print_grid(belief)
-                        print_grid(knowledge)
-                        print_grid(matrix)
+                        # print_grid(belief)
+                        # print_grid(knowledge)
+                        # print_grid(matrix)
                         sys.exit()
-        belief[x][y] = 1 - summation
+        belief[x][y] = 0.2*belief[x][y]/(0.2*belief[x][y]+(1-belief[x][y]))
     #UPDATE WHEN CELL ENCOUNTERED IS HILLY
     if condition == 2:
         summation = 0
@@ -236,12 +236,12 @@ def update_prob(position, belief, hash_map, condition):
                     summation += prob
                     if summation > 1:
                         print("belief overflow", summation, (x,y))
-                        print_grid(belief)
-                        print_grid(knowledge)
-                        print_grid(matrix)
+                        # print_grid(belief)
+                        # print_grid(knowledge)
+                        # print_grid(matrix)
                         sys.exit()
 
-        belief[x][y] = 1 - summation
+        belief[x][y] = 0.5*belief[x][y]/(0.2*belief[x][y]+(1-belief[x][y]))
     #UPDATE WHEN CELL ENCOUNTERED IS FOREST
     if condition == 3:
         summation = 0
@@ -253,14 +253,11 @@ def update_prob(position, belief, hash_map, condition):
                     summation += prob
                     if summation > 1:
                         print("belief overflow", summation, (x,y))
-                        print_grid(belief)
-                        print_grid(knowledge)
-                        print_grid(matrix)
+                        # print_grid(belief)
+                        # print_grid(knowledge)
+                        # print_grid(matrix)
                         sys.exit()
-        belief[x][y] = 1 - summation
-    # check how can we update the values of cell already present in the priority queue
-    # probQueue.put(PrioritizedItem(cell.prob,cell))
-    # print("probQueue:", probQueue.queue)
+        belief[x][y] = 0.8*belief[x][y]/(0.2*belief[x][y]+(1-belief[x][y]))
 
 
 def get_max_prob(belief, checked, start):
@@ -294,27 +291,18 @@ if __name__ == "__main__":
     grid_len = 10
     actual_path = []
     shortest_path = []
-    hash_map = {} #Dictionary to store nodes
+    #Dictionary to store nodes
+    hash_map = {} 
 
     #creating random grid world by providing it a p value of 0.3
-    matrix = create_grid(grid_len, 0.30)
-
-    c_flat = 0
-    c_hill = 0
-    c_forrest = 0
+    matrix = create_grid(grid_len, 0.3)
 
     #initializing knowledge of agent
     knowledge = [ [ "-" for i in range(grid_len) ] for j in range(grid_len) ]
-
-    # priority queue to store the highest probability values
-    probQueue = PriorityQueue()    
     
     #initialize dim X dim matrix to maintain the belief
     initial_prob = 1/(grid_len*grid_len)
     belief = [ [initial_prob for i in range(grid_len)] for j in range(grid_len) ]
-
-    print("Initial Belief")
-    print_grid(belief)
 
     #Set the start and goal
     start = Node()
@@ -327,8 +315,10 @@ if __name__ == "__main__":
     print("start", start.position)
     print("target", target.position)
 
-    print("FULL KNOWN GRIDWORLD")
-    print_grid(matrix)
+    # print("FULL KNOWN GRIDWORLD")
+    # print_grid(matrix)
+
+    target_count = 0
 
     #create node for each cell and assign a terrain type to it:
     for i in range(grid_len):
@@ -338,19 +328,12 @@ if __name__ == "__main__":
             if (matrix[i][j] == 0):
                 num = random.uniform(0, 1)
                 if(num < 0.33):
-                    cell.terrain = 1
-                    c_flat += 1
+                    cell.terrain = 1 #flat
                 elif(num < 0.66):
-                    cell.terrain = 2
-                    c_hill += 1
+                    cell.terrain = 2 #mountain
                 else:
-                    cell.terrain = 3
-                    c_forrest += 1
+                    cell.terrain = 3 #forrest
             hash_map[(i,j)] = cell
-    
-    print("flat", c_flat)
-    print("hill", c_hill)
-    print("forrest", c_forrest)
 
     # for any given grid ... first check whether the target is reachable from start
     res = Astar(matrix, start, target)
@@ -358,35 +341,31 @@ if __name__ == "__main__":
         sys.exit()
     print("path", res)
 
-
-    #run the agent until target not found
+    #run the agent until target found
     flag = True
     while flag:
         checked = [ [0 for i in range(grid_len)] for j in range(grid_len) ]
-        # if probQueue.empty():
-        #     print("queue empty")
-        #     break
 
         #find path from current to prob_target
         count = 0
         while True:
             prob_target = get_max_prob(belief, checked, start.position)
             prob_target = hash_map[prob_target] 
-            print("target",prob_target)
+            # print("target",prob_target)
+            target_count += 1
             path = Astar(knowledge, start, prob_target)[0]
             if path:
                 break
+            else:
+                update_prob(prob_target.position, belief, hash_map, "blocked")
             if count==grid_len^2-1:
                 print("all targets checked")
                 flag = False
                 break
             count += 1
-           
-
 
         #move along the path provided by A-star
         if path:
-            print("path", path)
             itr = 1    
             while itr < len(path):
                 x = path[itr][0]
@@ -397,9 +376,8 @@ if __name__ == "__main__":
                     knowledge[x][y] = 1
                     update_prob((x, y), belief, hash_map, "blocked")
                     if itr-1>=0:
-                        print("check",path[itr-1])
                         start = hash_map[path[itr-1]]
-                        print("start" , start)
+                        # print("start" , start)
                         checked = [ [0 for i in range(grid_len)] for j in range(grid_len) ]
                         count = 0
                         while True:
@@ -408,6 +386,8 @@ if __name__ == "__main__":
                             path = Astar(knowledge, start, prob_target)
                             if path:
                                 break
+                            else:
+                                update_prob(prob_target.position, belief, hash_map, "blocked")
                             if count==grid_len^2-1:
                                 print("all targets checked")
                                 flag = False
@@ -428,3 +408,5 @@ if __name__ == "__main__":
             print("path not found")
             print("exit loop")
             break
+
+    print ("targets", target_count)
