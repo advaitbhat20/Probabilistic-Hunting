@@ -260,18 +260,22 @@ def update_prob(position, belief, hash_map, condition):
         belief[x][y] = 0.8*belief[x][y]/(0.2*belief[x][y]+(1-belief[x][y]))
 
 
-def get_max_prob(belief, checked, start):
+def get_max_prob(belief, checked, start, hash_map):
     max_prob = -1
     max_pos = (0,0)
     grid_len = len(belief)
+    terrain_fnr = (1,0.2,0.5,0.8)
 
     for i in range(grid_len):
         for j in range(grid_len):
-            if belief[i][j] > max_prob and checked[i][j]==0 and start[0] != i  and start[1] != j:
-                max_prob = belief[i][j]
+            cell = hash_map[(i,j)]
+            terrain_type = cell.terrain
+            prob_finding_target = belief[i][j]*(1-terrain_fnr[terrain_type])
+            if prob_finding_target > max_prob and checked[i][j]==0 and start[0] != i  and start[1] != j:
+                max_prob = prob_finding_target
                 max_pos = (i,j)
                 checked[i][j]=1
-            elif belief[i][j] == max_prob and checked[i][j]==0 and start[0] != i  and start[1] != j:
+            elif prob_finding_target == max_prob and checked[i][j]==0 and start[0] != i  and start[1] != j:
                 if calc_manhattan(start, (i,j)) < calc_manhattan(start,max_pos) and calc_manhattan(start, (i,j)) != 0:
                     max_pos = (i,j)
                     checked[i][j]=1
@@ -349,7 +353,7 @@ if __name__ == "__main__":
         #find path from current to prob_target
         count = 0
         while True:
-            prob_target = get_max_prob(belief, checked, start.position)
+            prob_target = get_max_prob(belief, checked, start.position,hash_map)
             prob_target = hash_map[prob_target] 
             # print("target",prob_target)
             target_count += 1
@@ -382,7 +386,7 @@ if __name__ == "__main__":
                         checked = [ [0 for i in range(grid_len)] for j in range(grid_len) ]
                         count = 0
                         while True:
-                            prob_target = get_max_prob(belief, checked, start.position)
+                            prob_target = get_max_prob(belief, checked, start.position, hash_map)
                             prob_target = hash_map[prob_target] 
                             path = Astar(knowledge, start, prob_target)
                             if path:
