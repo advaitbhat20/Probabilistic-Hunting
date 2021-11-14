@@ -201,6 +201,7 @@ def update_prob(position, belief, hash_map, condition):
     x = position[0]
     y = position[1]
     grid_len = len(belief)
+    summation = 0
     #UPDATE WHEN CELL ENCOUNTERED IS BLOCKED
     if condition == "blocked":
         for i in range(grid_len):
@@ -208,56 +209,61 @@ def update_prob(position, belief, hash_map, condition):
                 if i != x and j != y:
                     prob = belief[i][j]/(1- belief[x][y])
                     belief[i][j] = prob
+                    summation += prob
         belief[x][y] = 0
     #UPDATE WHEN CELL ENCOUNTERED IS FLAT
-    if condition == 1:
-        summation = 0
+    elif condition == 1:
         for i in range(grid_len):
             for j in range(grid_len):
                 if i != x and j != y and knowledge[i][j] != 1:
                     prob = belief[i][j]/((1- belief[x][y])+(belief[x][y]*0.2))
                     belief[i][j] = prob
                     summation += prob
-                    if summation > 1:
-                        print("belief overflow", summation, (x,y))
+                    # if summation > 1:
+                        # print("belief overflow", summation, (x,y))
                         # print_grid(belief)
                         # print_grid(knowledge)
                         # print_grid(matrix)
-                        sys.exit()
+                        # sys.exit()
         belief[x][y] = 0.2*belief[x][y]/(0.2*belief[x][y]+(1-belief[x][y]))
+        summation += belief[x][y]
     #UPDATE WHEN CELL ENCOUNTERED IS HILLY
-    if condition == 2:
-        summation = 0
+    elif condition == 2:
         for i in range(grid_len):
             for j in range(grid_len):
                 if i != x and j != y and knowledge[i][j] != 1:
                     prob = belief[i][j]/((1- belief[x][y])+(belief[x][y]*0.5))
                     belief[i][j] = prob
                     summation += prob
-                    if summation > 1:
-                        print("belief overflow", summation, (x,y))
+                    # if summation > 1:
+                    #     print("belief overflow", summation, (x,y))
                         # print_grid(belief)
                         # print_grid(knowledge)
                         # print_grid(matrix)
-                        sys.exit()
-
+                        # sys.exit()
         belief[x][y] = 0.5*belief[x][y]/(0.2*belief[x][y]+(1-belief[x][y]))
+        summation += belief[x][y]
     #UPDATE WHEN CELL ENCOUNTERED IS FOREST
-    if condition == 3:
-        summation = 0
+    elif condition == 3:
         for i in range(grid_len):
             for j in range(grid_len):
                 if i != x and j != y and knowledge[i][j] != 1:
                     prob = belief[i][j]/((1- belief[x][y])+(belief[x][y]*0.8))
                     belief[i][j] = prob
                     summation += prob
-                    if summation > 1:
-                        print("belief overflow", summation, (x,y))
+                    # if summation > 1:
+                    #     print("belief overflow", summation, (x,y))
                         # print_grid(belief)
                         # print_grid(knowledge)
                         # print_grid(matrix)
-                        sys.exit()
+                        # sys.exit()
         belief[x][y] = 0.8*belief[x][y]/(0.2*belief[x][y]+(1-belief[x][y]))
+        summation += belief[x][y]
+
+    
+    for i in range(grid_len):
+        for j in range(grid_len):
+            belief[i][j] = belief[i][j]/summation
 
 
 def get_max_prob(belief, checked, start):
@@ -289,13 +295,27 @@ def get_max_prob(belief, checked, start):
 
 if __name__ == "__main__":
     grid_len = 10
+
     actual_path = []
     shortest_path = []
     #Dictionary to store nodes
     hash_map = {} 
 
     #creating random grid world by providing it a p value of 0.3
-    matrix = create_grid(grid_len, 0.3)
+    # matrix = create_grid(grid_len, 0.3)
+
+    matrix = [
+        [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+        [1, 0, 1, 1, 0, 0, 1, 1, 0, 1],
+        [0, 0, 1, 0, 1, 0, 0, 1, 0, 0],
+        [0, 1, 1, 0, 0, 1, 1, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 1, 1, 0, 0, 0, 0],
+        [1, 0, 1, 0, 0, 1, 0, 0, 1, 0],
+        [0, 1, 1, 0, 0, 0, 1, 0, 1, 0]
+    ]
 
     #initializing knowledge of agent
     knowledge = [ [ "-" for i in range(grid_len) ] for j in range(grid_len) ]
@@ -307,9 +327,11 @@ if __name__ == "__main__":
     #Set the start and goal
     start = Node()
     start.position = (random.randint(0,grid_len-1), random.randint(0,grid_len-1))
+    start.position = (7,0)
     matrix[start.position[0]][start.position[1]] = 0
     target = Node()
     target.position = (random.randint(0,grid_len-1), random.randint(0,grid_len-1))
+    target.position = (8,3)
     matrix[target.position[0]][target.position[1]] = 0
 
     print("start", start.position)
@@ -409,6 +431,14 @@ if __name__ == "__main__":
             print("path not found")
             print("exit loop")
             break
+
+
+    print("matrix")
+    print_grid(matrix)
+    print("knowledge")
+    print_grid(knowledge)
+    print("belied")
+    print_grid(belief)
 
     print("targets", target_count)
     print("steps", steps)

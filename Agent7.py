@@ -292,7 +292,7 @@ def get_max_prob(belief, checked, start, hash_map):
 ####################################################################################
 
 if __name__ == "__main__":
-    grid_len = 10
+    grid_len = 100
     actual_path = []
     shortest_path = []
     #Dictionary to store nodes
@@ -413,6 +413,11 @@ if __name__ == "__main__":
             print("path not found")
             print("exit loop")
             break
-
+    print("matrix")
+    print_grid(matrix)
+    print("knowledge")
+    print_grid(knowledge)
+    print("belied")
+    print_grid(belief)
     print("targets", target_count)
     print("steps", steps)
