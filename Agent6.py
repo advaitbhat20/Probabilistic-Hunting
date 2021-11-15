@@ -122,8 +122,8 @@ def Astar(knowledge_grid, start, end, flag=True, heuristic="manhattan"):
 
     while not pQueue.empty():
     #     # print(counter, len(pQueue.queue))
-    #     if counter > 20000:
-    #         return [None]
+        if counter > 20000:
+            return [None]
 
         current = pQueue.get().item
 
@@ -169,6 +169,7 @@ def Astar(knowledge_grid, start, end, flag=True, heuristic="manhattan"):
                 (x, y) = n.position
                 if knowledge_grid[x][y] != 1:
                     pQueue.put(PrioritizedItem(float(n.f), n))
+        counter+=1
 
     return [None]
 
@@ -241,7 +242,7 @@ def update_prob(position, belief, hash_map, condition):
                         # print_grid(knowledge)
                         # print_grid(matrix)
                         # sys.exit()
-        belief[x][y] = 0.5*belief[x][y]/(0.2*belief[x][y]+(1-belief[x][y]))
+        belief[x][y] = 0.5*belief[x][y]/(0.5*belief[x][y]+(1-belief[x][y]))
         summation += belief[x][y]
     #UPDATE WHEN CELL ENCOUNTERED IS FOREST
     elif condition == 3:
@@ -257,7 +258,7 @@ def update_prob(position, belief, hash_map, condition):
                         # print_grid(knowledge)
                         # print_grid(matrix)
                         # sys.exit()
-        belief[x][y] = 0.8*belief[x][y]/(0.2*belief[x][y]+(1-belief[x][y]))
+        belief[x][y] = 0.8*belief[x][y]/(0.8*belief[x][y]+(1-belief[x][y]))
         summation += belief[x][y]
 
     
@@ -294,7 +295,7 @@ def get_max_prob(belief, checked, start):
 ####################################################################################
 
 if __name__ == "__main__":
-    grid_len = 10
+    grid_len = 50
 
     actual_path = []
     shortest_path = []
@@ -302,20 +303,20 @@ if __name__ == "__main__":
     hash_map = {} 
 
     #creating random grid world by providing it a p value of 0.3
-    # matrix = create_grid(grid_len, 0.3)
+    matrix = create_grid(grid_len, 0.3)
 
-    matrix = [
-        [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
-        [1, 0, 1, 1, 0, 0, 1, 1, 0, 1],
-        [0, 0, 1, 0, 1, 0, 0, 1, 0, 0],
-        [0, 1, 1, 0, 0, 1, 1, 1, 0, 0],
-        [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-        [0, 0, 1, 0, 1, 1, 0, 0, 0, 0],
-        [1, 0, 1, 0, 0, 1, 0, 0, 1, 0],
-        [0, 1, 1, 0, 0, 0, 1, 0, 1, 0]
-    ]
+    # matrix = [
+    #     [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    #     [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+    #     [1, 0, 1, 1, 0, 0, 1, 1, 0, 1],
+    #     [0, 0, 1, 0, 1, 0, 0, 1, 0, 0],
+    #     [0, 1, 1, 0, 0, 1, 1, 1, 0, 0],
+    #     [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    #     [0, 0, 1, 0, 1, 1, 0, 0, 0, 0],
+    #     [1, 0, 1, 0, 0, 1, 0, 0, 1, 0],
+    #     [0, 1, 1, 0, 0, 0, 1, 0, 1, 0]
+    # ]
 
     #initializing knowledge of agent
     knowledge = [ [ "-" for i in range(grid_len) ] for j in range(grid_len) ]
@@ -327,11 +328,9 @@ if __name__ == "__main__":
     #Set the start and goal
     start = Node()
     start.position = (random.randint(0,grid_len-1), random.randint(0,grid_len-1))
-    start.position = (7,0)
     matrix[start.position[0]][start.position[1]] = 0
     target = Node()
     target.position = (random.randint(0,grid_len-1), random.randint(0,grid_len-1))
-    target.position = (8,3)
     matrix[target.position[0]][target.position[1]] = 0
 
     print("start", start.position)
@@ -359,7 +358,7 @@ if __name__ == "__main__":
 
     # for any given grid ... first check whether the target is reachable from start
     res = Astar(matrix, start, target)
-    if res == None:
+    if res == [None]:
         sys.exit()
     print("path", res)
 
@@ -371,16 +370,18 @@ if __name__ == "__main__":
         #find path from current to prob_target
         count = 0
         while True:
+            print("here")
             prob_target = get_max_prob(belief, checked, start.position)
             prob_target = hash_map[prob_target] 
             # print("target",prob_target)
             target_count += 1
             path = Astar(knowledge, start, prob_target)[0]
             if path:
+                print("found the true path", path)
                 break
             else:
                 update_prob(prob_target.position, belief, hash_map, "blocked")
-            if count==grid_len^2-1:
+            if count==grid_len**2-1:
                 print("all targets checked")
                 flag = False
                 break
@@ -390,6 +391,7 @@ if __name__ == "__main__":
         if path:
             itr = 1    
             while itr < len(path):
+                print("Taking node (",path[itr][0], path[itr][1], ") of ", path)
                 steps += 1
                 x = path[itr][0]
                 y = path[itr][1]
@@ -408,23 +410,28 @@ if __name__ == "__main__":
                             prob_target = hash_map[prob_target] 
                             path = Astar(knowledge, start, prob_target)
                             if path:
+                                print("we were on a break")
                                 break
                             else:
-                                update_prob(prob_target.position, belief, hash_map, "blocked")
-                            if count==grid_len^2-1:
+                                print("in to update 1")
+                                update_prob(prob_target.position, belief, hash_map, "blocked")  #WHY IS THIS HAPPENING?
+                                print("out of update 1")
+                            if count==grid_len**2-1:
                                 print("all targets checked")
                                 flag = False
                                 break
                             count += 1
-                        itr = 1
-                    
+                        itr += 1
                 else:
                     if examine(hash_map, (x,y), target):
                         print("target found ", x, y)
                         flag = False
                         break
                     else:
+                        print("in to update 2") # why are we updating the blief if this is just a passing node
                         update_prob((x,y), belief, hash_map, hash_map[(x,y)].terrain)
+                        print("out of update 2")
+
                         # update_prob((x,y), belief, hash_map, hash_map[(x,y)].terrain)
                     itr += 1
         else:
@@ -433,12 +440,12 @@ if __name__ == "__main__":
             break
 
 
-    print("matrix")
-    print_grid(matrix)
-    print("knowledge")
-    print_grid(knowledge)
-    print("belied")
-    print_grid(belief)
+    # print("matrix")
+    # print_grid(matrix)
+    # print("knowledge")
+    # print_grid(knowledge)
+    # print("belied")
+    # print_grid(belief)
 
     print("targets", target_count)
     print("steps", steps)
