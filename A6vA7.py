@@ -384,7 +384,8 @@ if __name__ == "__main__":
         # for any given grid ... first check whether the target is reachable from start
         res = Astar(matrix, start, target)
         if res == [None]:
-            sys.exit()
+            # sys.exit()
+            next
         # print("path", res)
 
         begin = time()
@@ -522,7 +523,8 @@ if __name__ == "__main__":
         # for any given grid ... first check whether the target is reachable from start
         res = Astar(matrix, start, target)
         if res == [None]:
-            sys.exit()
+            next
+            # sys.exit()
         # print("path", res)
 
         begin = time()
