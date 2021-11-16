@@ -327,10 +327,12 @@ if __name__ == "__main__":
     result = {
         "grid": [],
         'steps_for_A6': [],
-        'steps_for_A7': []
+        'steps_for_A7': [],
+        'ran_for_A6': [],
+        'ran_for_A7': []
     }
 
-    for i in range(10):
+    for i in range(100):
         result["grid"].append(i)
         print("############################",i)
 
@@ -392,6 +394,7 @@ if __name__ == "__main__":
 
         #run the agent until target found
         flag = True
+        ranA6 = True
         steps = 0
         while flag:
             checked = [ [0 for i in range(grid_len)] for j in range(grid_len) ]
@@ -470,11 +473,13 @@ if __name__ == "__main__":
 
                     curr_time = time()
                     if (curr_time - begin > 30):
-                        print("target found ", targetx, targety)
+                        ranA6 = False
+                        print("target not found ", targetx, targety)
                         flag = False
 
             else:
                 print("path not found")
+                ranA6 = False
                 print("exit loop")
                 break
 
@@ -490,6 +495,7 @@ if __name__ == "__main__":
         print("Agent 6 steps", steps)
 
         result["steps_for_A6"].append(steps)
+        result["ran_for_A6"].append(ranA6)
 
 
 
@@ -531,6 +537,7 @@ if __name__ == "__main__":
 
         #run the agent until target found
         flag = True
+        ranA7 = True
         steps = 0
         while flag:
             checked = [ [0 for i in range(grid_len)] for j in range(grid_len) ]
@@ -613,12 +620,14 @@ if __name__ == "__main__":
 
                     curr_time = time()
                     if (curr_time - begin > 30):
-                        print("target found ", targetx, targety)
+                        print("target not found ", targetx, targety)
                         flag = False
+                        ranA7 = False
                         break
 
             else:
                 print("path not found")
+                ranA7 = False
                 print("exit loop")
                 break
 
@@ -634,6 +643,7 @@ if __name__ == "__main__":
         print("Agent7 steps", steps)
 
         result["steps_for_A7"].append(steps)
+        result["ran_for_A7"].append(ranA7)
 
     data = pd.DataFrame(result)
-    data.to_csv("Agent6VSAgent7.csv", index=False, encoding='utf-8')
+    data.to_csv("Agent6VSAgent7_20.csv", index=False, encoding='utf-8')
